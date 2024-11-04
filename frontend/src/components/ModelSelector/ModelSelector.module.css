@@ -1,0 +1,17 @@
+/* ModelSelector.module.css */
+.modelButton {
+    margin-left: 10px;
+}
+
+.modelInfo {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f8f8f8;
+    border-radius: 4px;
+}
+
+.endpoint {
+    font-size: 12px;
+    color: #666;
+    word-break: break-all;
+}

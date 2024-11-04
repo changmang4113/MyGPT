@@ -19,6 +19,13 @@ import {
 
 import { appStateReducer } from './AppReducer'
 
+
+interface ModelConfig {
+  model: string;
+  endpoint: string;
+  deploymentName: string;
+}
+
 export interface AppState {
   isChatHistoryOpen: boolean
   chatHistoryLoadingState: ChatHistoryLoadingState
@@ -30,6 +37,9 @@ export interface AppState {
   feedbackState: { [answerId: string]: Feedback.Neutral | Feedback.Positive | Feedback.Negative }
   isLoading: boolean;
   answerExecResult: { [answerId: string]: [] }
+  systemMessage: string;
+  model: string;
+  modelConfig: ModelConfig;
 }
 
 export type Action =
@@ -51,6 +61,9 @@ export type Action =
   }
   | { type: 'GET_FEEDBACK_STATE'; payload: string }
   | { type: 'SET_ANSWER_EXEC_RESULT'; payload: { answerId: string, exec_result: [] } }
+  | { type: 'UPDATE_SYSTEM_MESSAGE'; payload: string }
+  | { type: 'UPDATE_MODEL'; payload: string }
+  | { type: 'UPDATE_MODEL_CONFIG'; payload: ModelConfig }
 
 const initialState: AppState = {
   isChatHistoryOpen: false,
@@ -66,6 +79,13 @@ const initialState: AppState = {
   feedbackState: {},
   isLoading: true,
   answerExecResult: {},
+  systemMessage: '',
+  model: 'gpt-4o',
+  modelConfig: {
+    model: 'gpt-4o',
+    endpoint: 'https://aoai-mygpt4tkgreen03s.openai.azure.com/',
+    deploymentName: 'gpt-4o'
+  }
 }
 
 export const AppStateContext = createContext<

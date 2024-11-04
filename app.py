@@ -125,22 +125,14 @@ async def init_openai_client():
                 f"The minimum supported Azure OpenAI preview API version is '{MINIMUM_SUPPORTED_AZURE_OPENAI_PREVIEW_API_VERSION}'"
             )
 
-        # Endpoint
-        if (
-            not app_settings.azure_openai.endpoint and
-            not app_settings.azure_openai.resource
-        ):
-            raise ValueError(
-                "AZURE_OPENAI_ENDPOINT or AZURE_OPENAI_RESOURCE is required"
-            )
-
-        endpoint = (
+        # リクエストからエンドポイントを取得するように修正
+        endpoint = request_body.get("model", {}).get("endpoint") or (
             app_settings.azure_openai.endpoint
             if app_settings.azure_openai.endpoint
             else f"https://{app_settings.azure_openai.resource}.openai.azure.com/"
         )
 
-        # Authentication
+        # 認証部分は変更なし
         aoai_api_key = app_settings.azure_openai.key
         ad_token_provider = None
         if not aoai_api_key:
@@ -151,12 +143,7 @@ async def init_openai_client():
                     "https://cognitiveservices.azure.com/.default"
                 )
 
-        # Deployment
-        deployment = app_settings.azure_openai.model
-        if not deployment:
-            raise ValueError("AZURE_OPENAI_MODEL is required")
-
-        # Default Headers
+        # デフォルトヘッダー
         default_headers = {"x-ms-useragent": USER_AGENT}
 
         azure_openai_client = AsyncAzureOpenAI(
@@ -207,6 +194,10 @@ async def init_cosmosdb_client():
 
 
 def prepare_model_args(request_body, request_headers):
+    model_config = request_body.get("model", {})
+    model = model_config.get("model")
+    endpoint = model_config.get("endpoint")
+    deployment_name = model_config.get("deploymentName")
     request_messages = request_body.get("messages", [])
     messages = []
     if not app_settings.datasource:
@@ -250,7 +241,7 @@ def prepare_model_args(request_body, request_headers):
         "top_p": app_settings.azure_openai.top_p,
         "stop": app_settings.azure_openai.stop_sequence,
         "stream": app_settings.azure_openai.stream,
-        "model": app_settings.azure_openai.model,
+        "model": deployment_name or app_settings.azure_openai.model,  # フロントエンドから受け取ったモデルを優先
         "user": user_json
     }
 
@@ -346,6 +337,7 @@ async def send_chat_request(request_body, request_headers):
     model_args = prepare_model_args(request_body, request_headers)
 
     try:
+        # モデル設定に基づいてクライアントを初期化
         azure_openai_client = await init_openai_client()
         raw_response = await azure_openai_client.chat.completions.with_raw_response.create(**model_args)
         response = raw_response.parse()

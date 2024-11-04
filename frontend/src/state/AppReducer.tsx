@@ -82,6 +82,10 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
           [action.payload.answerId]: action.payload.exec_result
         }
       }
+    case 'UPDATE_SYSTEM_MESSAGE':
+      return { ...state, systemMessage: action.payload }
+    case 'UPDATE_MODEL':
+      return { ...state, model: action.payload }
     default:
       return state
   }

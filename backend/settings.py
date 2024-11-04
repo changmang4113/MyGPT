@@ -101,7 +101,7 @@ class _AzureOpenAISettings(BaseSettings):
         env_ignore_empty=True
     )
     
-    model: str
+    model: Optional[str] = None  # デフォルト値をNoneに変更
     key: Optional[str] = None
     resource: Optional[str] = None
     endpoint: Optional[str] = None
@@ -158,17 +158,33 @@ class _AzureOpenAISettings(BaseSettings):
         
         return None
     
+
+    # 新しいバリデーター追加
+    @model_validator(mode="after")
+    def validate_model_settings(self) -> Self:
+        # 環境変数から設定がない場合はバリデーションをスキップ
+        if not any([self.model, self.endpoint]):
+            return self
+            
+        return self
+
+    # ensure_endpointバリデーターの修正
     @model_validator(mode="after")
     def ensure_endpoint(self) -> Self:
+        # フロントエンドから設定される場合はバリデーションをスキップ
+        if not any([self.endpoint, self.resource]):
+            return self
+            
         if self.endpoint:
-            return Self
+            return self
         
         elif self.resource:
             self.endpoint = f"https://{self.resource}.openai.azure.com"
-            return Self
+            return self
         
-        raise ValidationError("AZURE_OPENAI_ENDPOINT or AZURE_OPENAI_RESOURCE is required")
-        
+        return self    
+
+
     def extract_embedding_dependency(self) -> Optional[dict]:
         if self.embedding_name:
             return {
